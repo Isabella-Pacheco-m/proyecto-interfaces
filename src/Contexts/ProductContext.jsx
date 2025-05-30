@@ -10,34 +10,41 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 
-export const ProductContext = createContext();
 
-export const useProducts = () => useContext(ProductContext);
+//Este contexto proporciona la gestion de  productos, como obtener, filtrar, seleccionar, aagregar
+// se maneja los estados de carga, error y favoritos, se filtra productor por sus criterios y se integra con firestore para los datos
 
-export const ProductProvider = ({ children }) => {
-  const [allProducts, setAllProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [filters, setFilters] = useState({
+
+export const ProductContext = createContext(); //creacion de contexto para los productos
+export const useProducts = () => useContext(ProductContext); //creacion de un hook para acceder a nuestro contexto de manera mas sencilla
+
+export const ProductProvider = ({ children }) => {  //definimos el provedor de contexto que envuelve los componentes hijos 
+  // Estado para almacenar los productos y sus filtros                        
+  const [allProducts, setAllProducts] = useState([]); // almacena todos los productos sin filtrar
+  const [filteredProducts, setFilteredProducts] = useState([]); // alacena los productos depues de aplicar los filtros
+  const [selectedProduct, setSelectedProduct] = useState(null); // almacena el producto seleccionado 
+  const [filters, setFilters] = useState({ // objeto con los filtros actuales 
     searchTerm: "",
     tags: [],
     priceRange: { min: 0, max: Infinity }
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false); // estado de carga
+  const [error, setError] = useState(null); // mensaje de error
 
-  const [favoriteIds, setFavoriteIds] = useState([]);
+  const [favoriteIds, setFavoriteIds] = useState([]); // ids de los productos favoritos
 
-  const toggleFavorite = (productId) => {
-    setFavoriteIds((prev) =>
-      prev.includes(productId)
+  // Funciones para manejar los favoritos//
+  const toggleFavorite = (productId) => { // alterna el estado de favorito de un producto
+    setFavoriteIds((prev) => 
+      prev.includes(productId) 
         ? prev.filter((id) => id !== productId)
         : [...prev, productId]
     );
   };
 
-  const isFavorite = (productId) => favoriteIds.includes(productId);
+  const isFavorite = (productId) => favoriteIds.includes(productId); // verifica si un producto es favorito
 
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
   const fetchProducts = async () => {
     setLoading(true);
     setError(null);
@@ -66,6 +73,9 @@ export const ProductProvider = ({ children }) => {
     }
   };
 
+
+
+// Función para obtener un producto por ID
   const getProductById = async (id) => {
     const productoEncontrado = allProducts.find((p) => p.id === id);
     if (productoEncontrado) {
@@ -101,6 +111,9 @@ export const ProductProvider = ({ children }) => {
     }
   };
 
+
+
+  // Función para agregar un nuevo producto
   const addProduct = async (productData) => {
     setLoading(true);
     setError(null);
@@ -131,6 +144,8 @@ export const ProductProvider = ({ children }) => {
     }
   };
 
+
+  // Filtrado de productos basado en los filtros aplicados
   useEffect(() => {
     let resultado = [...allProducts];
 
@@ -158,15 +173,15 @@ export const ProductProvider = ({ children }) => {
     setFilteredProducts(resultado);
   }, [allProducts, filters]);
 
-  useEffect(() => {
+  useEffect(() => { // Cargar productos al iniciar el componente
     fetchProducts();
   }, []);
 
-  const updateFilters = (newFilters) => {
+  const updateFilters = (newFilters) => { // actualiza los filtros aplicados
     setFilters((prev) => ({ ...prev, ...newFilters }));
   };
 
-  const contextValue = {
+  const contextValue = { // valor del contexto que se pasara a los componentes hijos
     products: filteredProducts,
     allProducts,
     selectedProduct,
@@ -182,7 +197,7 @@ export const ProductProvider = ({ children }) => {
     favoriteIds
   };
 
-  return (
+  return ( // retorna el proveedor de contexto con el valor definido
     <ProductContext.Provider value={contextValue}>
       {children}
     </ProductContext.Provider>
